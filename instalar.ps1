@@ -2,11 +2,8 @@
 winget source reset --force
 winget source update
 
-winget upgrade Microsoft.AppInstaller `
-  --source winget `
-  --silent `
-  --accept-package-agreements `
-  --accept-source-agreements
+# Atualizar App Installer
+winget upgrade Microsoft.AppInstaller --source winget --silent --accept-package-agreements --accept-source-agreements
 
 # Instalar programas
 winget install Google.Chrome --source winget --silent --accept-package-agreements --accept-source-agreements
