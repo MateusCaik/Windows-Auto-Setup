@@ -12,4 +12,5 @@ Script automático para instalação de programas no Windows usando Winget.
 
 1. Baixe o repositório
 2. Execute `Executar.bat` como administrador
-3. Aguarde a instalação automática
+3. Selecionar as opções desejáveis
+4. Aguardar a instalação automática e silenciosa
