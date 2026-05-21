@@ -75,7 +75,7 @@ $button.Add_Click({
         $status.Text = "Instalando: $($item.Text)"
         $form.Refresh()
         
-       # OFFICE 2016
+# OFFICE 2016
 if ($item.Tag -eq "Office2016") {
 
     $officePath = "$env:TEMP\Office2016Deploy"
@@ -88,16 +88,39 @@ if ($item.Tag -eq "Office2016") {
     $setupPath = "$officePath\setup.exe"
     $xmlPath = "$officePath\configuration.xml"
 
-    Invoke-WebRequest `
-        -Uri "https://download.microsoft.com/download/2/7/7/2771D5A5-68A0-4A2B-BD3F-9B6B0E6D5B8A/officedeploymenttool.exe" `
-        -OutFile $odtExe
+    $status.Text = "Baixando ferramenta do Office..."
+    $form.Refresh()
+
+    try {
+        Invoke-WebRequest `
+            -Uri "https://download.microsoft.com/download/2/7/7/2771D5A5-68A0-4A2B-BD3F-9B6B0E6D5B8A/officedeploymenttool.exe" `
+            -OutFile $odtExe `
+            -ErrorAction Stop
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show("Erro ao baixar o Office Deployment Tool. Verifique a internet ou o link da Microsoft.")
+        return
+    }
+
+    if (!(Test-Path $odtExe)) {
+        [System.Windows.Forms.MessageBox]::Show("O instalador do Office não foi baixado.")
+        return
+    }
+
+    $status.Text = "Extraindo ferramenta do Office..."
+    $form.Refresh()
 
     Start-Process `
         -FilePath $odtExe `
         -ArgumentList "/extract:$officePath /quiet" `
         -Wait
 
-  $xml = @"
+    if (!(Test-Path $setupPath)) {
+        [System.Windows.Forms.MessageBox]::Show("O setup.exe do Office não foi encontrado após a extração.")
+        return
+    }
+
+    $xml = @"
 <Configuration>
   <Add OfficeClientEdition="64" Channel="Current">
     <Product ID="ProPlus2016Volume">
@@ -111,10 +134,16 @@ if ($item.Tag -eq "Office2016") {
 
     $xml | Out-File -Encoding UTF8 $xmlPath
 
+    $status.Text = "Baixando arquivos do Office 2016..."
+    $form.Refresh()
+
     Start-Process `
         -FilePath $setupPath `
         -ArgumentList "/download `"$xmlPath`"" `
         -Wait
+
+    $status.Text = "Instalando Office 2016..."
+    $form.Refresh()
 
     Start-Process `
         -FilePath $setupPath `
