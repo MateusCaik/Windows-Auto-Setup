@@ -76,14 +76,29 @@ $button.Add_Click({
         $form.Refresh()
 
         # OFFICE 2016
-        if ($item.Tag -eq "Office2016") {
+       # OFFICE 2016
+if ($item.Tag -eq "Office2016") {
 
-            winget install Microsoft.OfficeDeploymentTool `
-                --silent `
-                --accept-package-agreements `
-                --accept-source-agreements
+    $officePath = "$env:TEMP\Office2016Deploy"
 
-            $xml = @"
+    if (!(Test-Path $officePath)) {
+        New-Item -ItemType Directory -Path $officePath | Out-Null
+    }
+
+    $odtExe = "$officePath\officedeploymenttool.exe"
+    $setupPath = "$officePath\setup.exe"
+    $xmlPath = "$officePath\configuration.xml"
+
+    Invoke-WebRequest `
+        -Uri "https://download.microsoft.com/download/2/7/7/2771D5A5-68A0-4A2B-BD3F-9B6B0E6D5B8A/officedeploymenttool.exe" `
+        -OutFile $odtExe
+
+    Start-Process `
+        -FilePath $odtExe `
+        -ArgumentList "/extract:$officePath /quiet" `
+        -Wait
+
+    $xml = @"
 <Configuration>
   <Add OfficeClientEdition="64" Channel="PerpetualVL2019">
     <Product ID="ProPlus2016Volume">
@@ -95,19 +110,18 @@ $button.Add_Click({
 </Configuration>
 "@
 
-            $xmlPath = "$env:TEMP\office2016.xml"
+    $xml | Out-File -Encoding UTF8 $xmlPath
 
-            $xml | Out-File -Encoding UTF8 $xmlPath
+    Start-Process `
+        -FilePath $setupPath `
+        -ArgumentList "/download `"$xmlPath`"" `
+        -Wait
 
-            $setupPath = "${env:ProgramFiles(x86)}\Office Deployment Tool\setup.exe"
-
-            if (-Not (Test-Path $setupPath)) {
-                $setupPath = "$env:ProgramFiles\Office Deployment Tool\setup.exe"
-            }
-
-            & $setupPath /configure $xmlPath
-        }
-
+    Start-Process `
+        -FilePath $setupPath `
+        -ArgumentList "/configure `"$xmlPath`"" `
+        -Wait
+}
         # DEMAIS PROGRAMAS
         else {
 
