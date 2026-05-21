@@ -6,7 +6,8 @@ Script automático para instalação de programas no Windows usando Winget.
 - Firefox
 - WinRAR
 - Java Runtime
-- Microsoft Office
+- Microsoft Office 365
+- Microsoft Office 2016
 
 ## ⚡ Como usar
 
