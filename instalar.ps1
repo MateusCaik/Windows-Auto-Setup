@@ -74,8 +74,7 @@ $button.Add_Click({
 
         $status.Text = "Instalando: $($item.Text)"
         $form.Refresh()
-
-        # OFFICE 2016
+        
        # OFFICE 2016
 if ($item.Tag -eq "Office2016") {
 
@@ -98,9 +97,9 @@ if ($item.Tag -eq "Office2016") {
         -ArgumentList "/extract:$officePath /quiet" `
         -Wait
 
-    $xml = @"
+  $xml = @"
 <Configuration>
-  <Add OfficeClientEdition="64" Channel="PerpetualVL2019">
+  <Add OfficeClientEdition="64" Channel="Current">
     <Product ID="ProPlus2016Volume">
       <Language ID="pt-br" />
     </Product>
