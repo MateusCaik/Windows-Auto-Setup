@@ -18,20 +18,28 @@ $apps = @(
     @{ Nome = "Mozilla Firefox"; Id = "Mozilla.Firefox" },
     @{ Nome = "WinRAR"; Id = "RARLab.WinRAR" },
     @{ Nome = "Java Runtime"; Id = "Oracle.JavaRuntimeEnvironment" },
-    @{ Nome = "Microsoft Office"; Id = "Microsoft.Office" }
+
+    # Microsoft 365
+    @{ Nome = "Microsoft Office 365"; Id = "Microsoft.Office" },
+
+    # Office 2016
+    @{ Nome = "Microsoft Office 2016"; Id = "Office2016" }
 )
 
 $checkboxes = @()
 $y = 70
 
 foreach ($app in $apps) {
+
     $check = New-Object System.Windows.Forms.CheckBox
     $check.Text = $app.Nome
     $check.Tag = $app.Id
     $check.AutoSize = $true
     $check.Location = New-Object System.Drawing.Point(30, $y)
     $check.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+
     $form.Controls.Add($check)
+
     $checkboxes += $check
     $y += 35
 }
@@ -41,6 +49,7 @@ $button.Text = "Instalar Selecionados"
 $button.Size = New-Object System.Drawing.Size(200, 40)
 $button.Location = New-Object System.Drawing.Point(30, 330)
 $button.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+
 $form.Controls.Add($button)
 
 $status = New-Object System.Windows.Forms.Label
@@ -48,30 +57,75 @@ $status.Text = "Aguardando Escolha..."
 $status.AutoSize = $true
 $status.Location = New-Object System.Drawing.Point(250, 340)
 $status.Font = New-Object System.Drawing.Font("Segoe UI", 9)
+
 $form.Controls.Add($status)
 
 $button.Add_Click({
+
     $selecionados = $checkboxes | Where-Object { $_.Checked }
 
     if ($selecionados.Count -eq 0) {
+
         [System.Windows.Forms.MessageBox]::Show("Selecione pelo menos um programa.")
         return
     }
 
     foreach ($item in $selecionados) {
+
         $status.Text = "Instalando: $($item.Text)"
         $form.Refresh()
 
-        winget install $item.Tag --source winget --silent --accept-package-agreements --accept-source-agreements
+        # OFFICE 2016
+        if ($item.Tag -eq "Office2016") {
+
+            winget install Microsoft.OfficeDeploymentTool `
+                --silent `
+                --accept-package-agreements `
+                --accept-source-agreements
+
+            $xml = @"
+<Configuration>
+  <Add OfficeClientEdition="64" Channel="PerpetualVL2019">
+    <Product ID="ProPlus2016Volume">
+      <Language ID="pt-br" />
+    </Product>
+  </Add>
+
+  <Display Level="None" AcceptEULA="TRUE" />
+</Configuration>
+"@
+
+            $xmlPath = "$env:TEMP\office2016.xml"
+
+            $xml | Out-File -Encoding UTF8 $xmlPath
+
+            $setupPath = "${env:ProgramFiles(x86)}\Office Deployment Tool\setup.exe"
+
+            if (-Not (Test-Path $setupPath)) {
+                $setupPath = "$env:ProgramFiles\Office Deployment Tool\setup.exe"
+            }
+
+            & $setupPath /configure $xmlPath
+        }
+
+        # DEMAIS PROGRAMAS
+        else {
+
+            winget install $item.Tag `
+                --source winget `
+                --silent `
+                --accept-package-agreements `
+                --accept-source-agreements
+        }
     }
 
     $status.Text = "Instalação finalizada!"
+
     [System.Windows.Forms.MessageBox]::Show("Programas instalados com sucesso!")
 
-$form.Close()
+    $form.Close()
 
-Stop-Process -Id $PID
-
+    Stop-Process -Id $PID
 })
 
 $form.ShowDialog()
