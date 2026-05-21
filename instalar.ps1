@@ -11,6 +11,7 @@ $title.Text = "Selecione o que deseja instalar"
 $title.Font = New-Object System.Drawing.Font("Segoe UI", 14, [System.Drawing.FontStyle]::Bold)
 $title.AutoSize = $true
 $title.Location = New-Object System.Drawing.Point(20, 20)
+
 $form.Controls.Add($title)
 
 $apps = @(
@@ -74,53 +75,45 @@ $button.Add_Click({
 
         $status.Text = "Instalando: $($item.Text)"
         $form.Refresh()
-        
-# OFFICE 2016
-if ($item.Tag -eq "Office2016") {
 
-    $officePath = "$env:TEMP\Office2016Deploy"
+        # OFFICE 2016
+        if ($item.Tag -eq "Office2016") {
 
-    if (!(Test-Path $officePath)) {
-        New-Item -ItemType Directory -Path $officePath | Out-Null
-    }
+            $officePath = "$env:TEMP\Office2016Deploy"
 
-    $odtExe = "$officePath\officedeploymenttool.exe"
-    $setupPath = "$officePath\setup.exe"
-    $xmlPath = "$officePath\configuration.xml"
+            if (!(Test-Path $officePath)) {
+                New-Item -ItemType Directory -Path $officePath | Out-Null
+            }
 
-    $status.Text = "Baixando ferramenta do Office..."
-    $form.Refresh()
+            $odtOrigem = "$PSScriptRoot\office\officedeploymenttool_19929-20090.exe"
 
-    try {
-        Invoke-WebRequest `
-            -Uri "https://download.microsoft.com/download/2/7/7/2771D5A5-68A0-4A2B-BD3F-9B6B0E6D5B8A/officedeploymenttool.exe" `
-            -OutFile $odtExe `
-            -ErrorAction Stop
-    }
-    catch {
-        [System.Windows.Forms.MessageBox]::Show("Erro ao baixar o Office Deployment Tool. Verifique a internet ou o link da Microsoft.")
-        return
-    }
+            $odtExe = "$officePath\officedeploymenttool.exe"
+            $setupPath = "$officePath\setup.exe"
+            $xmlPath = "$officePath\configuration.xml"
 
-    if (!(Test-Path $odtExe)) {
-        [System.Windows.Forms.MessageBox]::Show("O instalador do Office não foi baixado.")
-        return
-    }
+            if (!(Test-Path $odtOrigem)) {
 
-    $status.Text = "Extraindo ferramenta do Office..."
-    $form.Refresh()
+                [System.Windows.Forms.MessageBox]::Show("Office Deployment Tool não encontrado na pasta office.")
+                return
+            }
 
-    Start-Process `
-        -FilePath $odtExe `
-        -ArgumentList "/extract:$officePath /quiet" `
-        -Wait
+            Copy-Item $odtOrigem $odtExe -Force
 
-    if (!(Test-Path $setupPath)) {
-        [System.Windows.Forms.MessageBox]::Show("O setup.exe do Office não foi encontrado após a extração.")
-        return
-    }
+            $status.Text = "Extraindo Office Deployment Tool..."
+            $form.Refresh()
 
-    $xml = @"
+            Start-Process `
+                -FilePath $odtExe `
+                -ArgumentList "/extract:$officePath /quiet" `
+                -Wait
+
+            if (!(Test-Path $setupPath)) {
+
+                [System.Windows.Forms.MessageBox]::Show("setup.exe do Office não encontrado.")
+                return
+            }
+
+            $xml = @"
 <Configuration>
   <Add OfficeClientEdition="64" Channel="Current">
     <Product ID="ProPlus2016Volume">
@@ -132,24 +125,25 @@ if ($item.Tag -eq "Office2016") {
 </Configuration>
 "@
 
-    $xml | Out-File -Encoding UTF8 $xmlPath
+            $xml | Out-File -Encoding UTF8 $xmlPath
 
-    $status.Text = "Baixando arquivos do Office 2016..."
-    $form.Refresh()
+            $status.Text = "Baixando Office 2016..."
+            $form.Refresh()
 
-    Start-Process `
-        -FilePath $setupPath `
-        -ArgumentList "/download `"$xmlPath`"" `
-        -Wait
+            Start-Process `
+                -FilePath $setupPath `
+                -ArgumentList "/download `"$xmlPath`"" `
+                -Wait
 
-    $status.Text = "Instalando Office 2016..."
-    $form.Refresh()
+            $status.Text = "Instalando Office 2016..."
+            $form.Refresh()
 
-    Start-Process `
-        -FilePath $setupPath `
-        -ArgumentList "/configure `"$xmlPath`"" `
-        -Wait
-}
+            Start-Process `
+                -FilePath $setupPath `
+                -ArgumentList "/configure `"$xmlPath`"" `
+                -Wait
+        }
+
         # DEMAIS PROGRAMAS
         else {
 
